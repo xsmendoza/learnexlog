@@ -1,5 +1,5 @@
 // API Key de TMDB
-const apiKey = '694ca23f12d42b9db18d614d3ffd3496';
+const apiKey = '964a4ec4df2918b9ec7512ea46440c95';
 const apiUrl = 'https://api.themoviedb.org/3/discover/movie?api_key=' + apiKey + '&language=es-MX&sort_by=popularity.desc&page=';
 let currentPage = 1; // Variable para el control de la página
 
