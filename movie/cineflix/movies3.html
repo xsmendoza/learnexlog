@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalles de Película</title>
+ <!-- <style>
+    /* Estilos básicos */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .movie-details-card {
+      width: 80%;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    .movie-banner {
+      position: relative;
+      width: 100%;
+    }
+    .movie-backdrop {
+      width: 100%;
+      height: 400px;
+      object-fit: cover;
+      border-radius: 8px;
+      filter: blur(5px);
+    }
+    .movie-poster {
+      width: 200px;
+      height: 300px;
+      object-fit: cover;
+      border-radius: 8px;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1;
+    }
+    .movie-title {
+      font-size: 2em;
+      margin-top: 20px;
+      z-index: 2;
+      position: relative;
+    }
+    .movie-genres, .movie-overview, .movie-rating {
+      margin: 10px 0;
+    }
+    .movie-cast, .related-movies {
+      margin-top: 20px;
+    }
+    .cast-container, .related-container {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .actor, .related-movie {
+      text-align: center;
+    }
+    .actor-img, .related-img {
+      width: 100px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+    .movie-player iframe {
+      width: 100%;
+      height: 400px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 20px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+  </style>-->
+</head>
+<body>
+  <div id="movie-details"></div>
+
+  <script>
+    // Obtener el ID de la película de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const movieId = urlParams.get('id');
+    const apiKey = '694ca23f12d42b9db18d614d3ffd3496';
+    const apiUrl = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=es-MX`;
+    const creditsUrl = `https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${apiKey}&language=es-MX`;
+    const relatedUrl = `https://api.themoviedb.org/3/movie/${movieId}/recommendations?api_key=${apiKey}&language=es-MX&page=1`;
+
+    async function fetchMovieDetails() {
+      try {
+        const movieResponse = await fetch(apiUrl);
+        const movie = await movieResponse.json();
+
+        const creditsResponse = await fetch(creditsUrl);
+        const credits = await creditsResponse.json();
+
+        const relatedResponse = await fetch(relatedUrl);
+        const related = await relatedResponse.json();
+
+        if (!movie || !credits || !related) {
+          console.error('Datos no encontrados');
+          return;
+        }
+
+        // Mostrar los detalles de la película
+        displayMovieDetails(movie, credits, related);
+      } catch (error) {
+        console.error('Error al obtener los detalles de la película:', error);
+      }
+    }
+
+    function displayMovieDetails(movie, credits, related) {
+      const movieDetailsContainer = document.getElementById('movie-details');
+
+      // Si no hay imagen, usar una imagen de reserva
+      const posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image';
+      const backdropUrl = movie.backdrop_path ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}` : 'https://via.placeholder.com/1280x720?text=No+Backdrop';
+
+      const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : 'Desconocido';
+      const movieGenres = movie.genres.map(genre => genre.name).join(', ');
+
+      // Obtener el reparto con imágenes de los actores
+      const cast = credits.cast.slice(0, 5).map(actor => {
+        const actorImg = actor.profile_path ? `https://image.tmdb.org/t/p/w500${actor.profile_path}` : 'https://via.placeholder.com/100x150?text=No+Image';
+        return `<div class="actor">
+                  <img src="${actorImg}" alt="${actor.name}" class="actor-img">
+                  <p>${actor.name}</p>
+                </div>`;
+      }).join('');
+
+      // Obtener las películas relacionadas con sus imágenes de cartelera y enlaces a la página 'relacionMovie.html'
+      const relatedMovies = related.results.slice(0, 5).map(movie => {
+        const relatedImg = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://via.placeholder.com/150x225?text=No+Image';
+        return `<div class="related-movie">
+                  <a href="relacionMovie.html?id=${movie.id}">
+                    <img src="${relatedImg}" alt="${movie.title}" class="related-img">
+                    <p>${movie.title}</p>
+                  </a>
+                </div>`;
+      }).join('');
+
+      // Crear el contenido HTML con los detalles de la película
+      movieDetailsContainer.innerHTML = `
+        <div class="movie-details-card">
+          <div class="movie-banner">
+            <img src="${backdropUrl}" alt="${movie.title}" class="movie-backdrop">
+          </div>
+
+          <h1 class="movie-title">${movie.title} (${releaseYear})</h1>
+          <div class="movie-genres">${movieGenres}</div>
+          <div class="movie-overview">${movie.overview}</div>
+          <div class="movie-rating">
+            <span>Rating: ${movie.vote_average}</span>
+          </div>
+
+          <!-- Imagen de la película en la esquina -->
+          <div>
+            <img src="${posterUrl}" alt="${movie.title}" class="movie-poster">
+          </div>
+
+          <!-- Agregar iframe dinámico de 2embed para reproducir la película -->
+          <div class="movie-player">
+            <iframe src="https://www.2embed.cc/embed/${movieId}" frameborder="0"></iframe>
+          </div>
+
+          <!-- Reparto con imágenes -->
+          <div class="movie-cast">
+            <h3>Reparto:</h3>
+            <div class="cast-container">
+              ${cast}
+            </div>
+          </div>
+
+          <!-- Películas relacionadas con imágenes y enlaces -->
+          <div class="related-movies">
+            <h3>Películas Relacionadas:</h3>
+            <div class="related-container">
+              ${relatedMovies}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    window.onload = function() {
+      fetchMovieDetails();
+    };
+  </script>
+</body>
+</html>
