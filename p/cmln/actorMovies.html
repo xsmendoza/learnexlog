@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Películas del Actor</title>
+  <link rel="stylesheet" href="styles.css"> <!-- Enlaza tu archivo CSS -->
+  <style>
+    /* Estilos para el contenedor del actor */
+.actor-container {
+  width: 80%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Estilos para la imagen del actor */
+.actor-header img.actor-image {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto;
+}
+
+.actor-header h1 {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* Estilos para las películas del actor */
+.actor-movies, .related-movies {
+  margin-top: 30px;
+}
+
+.movies-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.movie-card {
+  width: 150px;
+  cursor: pointer;
+  text-align: center;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.card-head .card-img {
+  width: 100%;
+  border-radius: 10px;
+  transition: transform 0.3s;
+}
+
+.card-head .card-img:hover {
+  transform: scale(1.1);
+}
+
+.card-body .card-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* Estilos para el overlay del icono de play */
+.card-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.movie-card:hover .card-overlay {
+  opacity: 1;
+}
+
+.play {
+  font-size: 30px;
+  color: white;
+}
+
+/* Estilo cuando se pasa el mouse sobre la tarjeta */
+.movie-card:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s;
+}
+
+/* Películas relacionadas */
+.related-movie-card {
+  width: 150px;
+  cursor: pointer;
+  text-align: center;
+  border-radius: 10px;
+}
+
+.related-movie-image {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.related-movie-card:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s;
+}
+
+/* Fondo y márgenes generales */
+body {
+  background-color: #f4f4f4;
+  font-family: Arial, sans-serif;
+}
+
+h2 {
+  margin-top: 30px;
+  text-align: center;
+}
+  </style>
+</head>
+<body>
+  <div class="actor-container">
+    <!-- Imagen y detalles del actor -->
+    <div class="actor-header">
+      <img id="actor-image" src="" alt="Imagen del Actor" class="actor-image">
+      <h1 id="actor-name"></h1>
+    </div>
+
+    <!-- Películas del actor -->
+    <div class="actor-movies">
+      <h2>Películas de <span id="actor-name-span"></span></h2>
+      <div id="actor-movie-list" class="movies-grid"></div>
+    </div>
+
+    <!-- Películas Relacionadas -->
+    <div class="related-movies">
+      <h2>Películas Relacionadas</h2>
+      <div id="related-movie-list" class="movies-grid"></div>
+    </div>
+  </div>
+
+  <script>
+    const apiKey = '694ca23f12d42b9db18d614d3ffd3496'; // Tu API de TMDB
+    const language = 'es-ES'; // Idioma en español
+    const actorId = new URLSearchParams(window.location.search).get('id'); // Obtener ID del actor desde la URL
+
+    const actorImage = document.getElementById('actor-image');
+    const actorName = document.getElementById('actor-name');
+    const actorNameSpan = document.getElementById('actor-name-span');
+    const actorMovieList = document.getElementById('actor-movie-list');
+    const relatedMovieList = document.getElementById('related-movie-list');
+
+    // Función para obtener los detalles del actor
+    function getActorDetails() {
+      fetch(`https://api.themoviedb.org/3/person/${actorId}?api_key=${apiKey}&language=${language}&append_to_response=movie_credits,similar`)
+        .then(response => response.json())
+        .then(data => {
+          // Mostrar imagen del actor
+          actorImage.src = `https://image.tmdb.org/t/p/w500${data.profile_path}`;
+          actorName.textContent = data.name;
+          actorNameSpan.textContent = data.name;
+
+          // Mostrar películas del actor
+          actorMovieList.innerHTML = '';
+          data.movie_credits.cast.forEach(movie => {
+            const movieCard = document.createElement('div');
+            movieCard.classList.add('movie-card');
+            movieCard.innerHTML = `
+              <div class="card-head">
+                <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title}" class="card-img">
+                <div class="card-overlay">
+                  <div class="play">
+                    <ion-icon name="play-circle-outline"></ion-icon>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <h3 class="card-title">${movie.title}</h3>
+              </div>
+            `;
+            movieCard.addEventListener('click', () => {
+              window.location.href = `movie.html?id=${movie.id}`;
+            });
+            actorMovieList.appendChild(movieCard);
+          });
+
+          // Mostrar películas relacionadas
+          relatedMovieList.innerHTML = '';
+          data.similar.results.slice(0, 3).forEach(movie => {
+            const relatedMovieCard = document.createElement('div');
+            relatedMovieCard.classList.add('movie-card');
+            relatedMovieCard.innerHTML = `
+              <div class="card-head">
+                <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title}" class="card-img">
+                <div class="card-overlay">
+                  <div class="play">
+                    <ion-icon name="play-circle-outline"></ion-icon>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <h3 class="card-title">${movie.title}</h3>
+              </div>
+            `;
+            relatedMovieCard.addEventListener('click', () => {
+              window.location.href = `movie.html?id=${movie.id}`;
+            });
+            relatedMovieList.appendChild(relatedMovieCard);
+          });
+        })
+        .catch(error => console.error('Error al cargar los detalles del actor:', error));
+    }
+
+    // Llamar la función para obtener los detalles del actor
+    getActorDetails();
+  </script>
+</body>
+</html>

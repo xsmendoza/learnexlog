@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Results</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="search-container">
+    <h1>Resultados de Búsqueda</h1>
+    <div id="search-results" class="movies-grid"></div>
+    <button id="load-more" class="load-more">Cargar más</button>
+  </div>
+
+  <script>
+    const apiKey = '694ca23f12d42b9db18d614d3ffd3496'; // Tu API de TMDB
+    const language = 'es-ES'; // Idioma en español
+    const query = new URLSearchParams(window.location.search).get('query'); // Obtener el query de la URL
+    const searchResultsContainer = document.getElementById('search-results');
+    const loadMoreButton = document.getElementById('load-more');
+    
+    let currentPage = 1;
+
+    function searchMovies() {
+      if (query) {
+        fetch(`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&language=${language}&query=${encodeURIComponent(query)}&page=${currentPage}`)
+          .then(response => response.json())
+          .then(data => {
+            const results = data.results;
+            if (results.length > 0) {
+              results.forEach(movie => {
+                const movieCard = document.createElement('div');
+                movieCard.classList.add('movie-card');
+                movieCard.innerHTML = `
+                  <div class="card-head">
+                    <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title}" class="card-img">
+                    <div class="card-overlay">
+                      <div class="play">
+                        <ion-icon name="play-circle-outline"></ion-icon>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <h3 class="card-title">${movie.title}</h3>
+                    <p class="card-year">${movie.release_date.split('-')[0]}</p>
+                  </div>
+                `;
+                movieCard.addEventListener('click', () => {
+                  window.location.href = `movie.html?id=${movie.id}`;
+                });
+                searchResultsContainer.appendChild(movieCard);
+              });
+
+              // Si hay más páginas, habilitar el botón de "Cargar más"
+              if (data.page < data.total_pages) {
+                loadMoreButton.style.display = 'block';
+              } else {
+                loadMoreButton.style.display = 'none';
+              }
+            } else {
+              searchResultsContainer.innerHTML = `<p>No se encontraron resultados para "${query}".</p>`;
+              loadMoreButton.style.display = 'none';
+            }
+          })
+          .catch(error => console.error('Error al buscar las películas:', error));
+      }
+    }
+
+    // Función para cargar más resultados
+    loadMoreButton.addEventListener('click', () => {
+      currentPage++;
+      searchMovies();
+    });
+
+    // Iniciar la búsqueda al cargar la página
+    searchMovies();
+  </script>
+</body>
+</html>
